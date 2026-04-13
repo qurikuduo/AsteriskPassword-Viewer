@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj' and '$(MSBuildProjectName)' == 'AsteriskPassword'">
+    <BaseIntermediateOutputPath>$(MSBuildProjectDirectory)\AsteriskPassword\obj\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+</Project>

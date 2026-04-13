@@ -1,52 +1,80 @@
-name: Star
+name: Release Windows
 
 on:
-
   push:
-    branches:
-      - main
-      
-  schedule:
-  - cron: "* * * * *"
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to create, for example v1.0.1
+        required: true
+      release_name:
+        description: Release title to publish
+        required: true
+
+permissions:
+  contents: write
 
 jobs:
-  auto_commit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-         persist-credentials: false
-         fetch-depth: 0
+  release:
+    runs-on: windows-2022
 
-      - name: Modify last update
-        run: |
-          d='DATE '`date '+%Y-%m-%d %H:%M:%S'`
-          echo $d > LOG
-          
-      - name: Commit changes
-        run: | 
-          git config --local user.email "ischhfd83@rambler.ru"
-          git config --local user.name "${{ github.repository_owner }}"
-          git add -A
-          
-          arr[0]="LOG"
-          arr[1]="LOG"
-          arr[2]="LOG"
-          arr[3]="LOG"
-          arr[4]="LOG"
-          arr[5]="LOG"
-          arr[6]="LOG"
-          arr[7]="LOG"
-          arr[8]="LOG"
-          arr[9]="LOG"
-          
-          rand=$[$RANDOM % ${#arr[@]}]
-          
-          git commit -m "${arr[$rand]}"
-          
-      - name: GitHub Push
-        uses: ad-m/github-push-action@master
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          force: true
-          directory: "."
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Resolve release metadata
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            "RELEASE_TAG=${{ inputs.tag }}" >> $env:GITHUB_ENV
+            "RELEASE_NAME=${{ inputs.release_name }}" >> $env:GITHUB_ENV
+          }
+          else {
+            "RELEASE_TAG=${{ github.ref_name }}" >> $env:GITHUB_ENV
+            "RELEASE_NAME=${{ github.ref_name }}" >> $env:GITHUB_ENV
+          }
+
+      - name: Create release tag
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if (-not (git tag --list "$env:RELEASE_TAG")) {
+            git tag "$env:RELEASE_TAG" "$env:GITHUB_SHA"
+            git push origin "refs/tags/$env:RELEASE_TAG"
+          }
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build solution
+        shell: pwsh
+        run: msbuild Asterisk-Password.sln /m /p:Configuration=Release /p:Platform=Win32
+
+      - name: Package release asset
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Compress-Archive -Path Asterisk/Release/AsteriskPassword.exe -DestinationPath "dist/AsteriskPassword-$env:RELEASE_TAG-Win32.zip" -Force
+
+      - name: Upload packaged artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AsteriskPassword-${{ env.RELEASE_TAG }}-Win32
+          path: dist/AsteriskPassword-${{ env.RELEASE_TAG }}-Win32.zip
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ env.RELEASE_NAME }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: dist/AsteriskPassword-${{ env.RELEASE_TAG }}-Win32.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true

@@ -28,15 +28,20 @@ The tool works by letting the user drag a target icon (crosshair) onto any passw
 
 ## 📂 Building the Project
 ### Requirements
-- Visual Studio with MFC support  
+- Visual Studio 2022 or newer with MFC support  
 - Windows SDK  
 - C++17 or newer (optional)
 
 ### Build Steps
-1. Open the project in Visual Studio.  
-2. Select either `Release` or `Debug` configuration.  
+1. Open `Asterisk-Password.sln` in Visual Studio.  
+2. Select either `Release|Win32` or `Debug|Win32`.  
 3. Build using **Build → Build Solution**.  
-4. The executable will be located in `./Release/AsteriskPassword.exe` (or Debug folder).
+4. The executable will be located in `Asterisk/Release/AsteriskPassword.exe` (or `Asterisk/Debug/AsteriskPassword.exe`).
+
+### GitHub Actions
+- `.github/workflows/build.yml` runs CI builds on pushes to `main` and on pull requests.
+- `.github/workflows/main.yml` builds and publishes a GitHub release asset when you push a `v*` tag, or when you manually dispatch it with a tag and release name.
+- Both workflows use `Asterisk/Release/AsteriskPassword.exe` as the final executable path.
 
 ## ⚠️ Legal Disclaimer
 This tool is intended **only** for:
