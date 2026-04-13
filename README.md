@@ -1,3 +1,5 @@
+[![Build Windows](https://github.com/qurikuduo/AsteriskPassword-Viewer/actions/workflows/build.yml/badge.svg)](https://github.com/qurikuduo/AsteriskPassword-Viewer/actions/workflows/build.yml)
+
 # AsteriskPassword
 
 AsteriskPassword，A star password viewer developed using C++ and MFC.
